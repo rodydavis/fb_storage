@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase/firebase.dart';
 import 'package:firebase/firebase.dart' as fb;
 import 'package:universal_html/prefer_universal/html.dart' as html;
@@ -44,7 +46,7 @@ class FbStorage implements FbStorageImpl {
     final _images = html.FileUploadInputElement();
     _images.accept = "image/*";
     _images.click();
-    final e = await _images.onChange.first;
+    final e = await _images.onChange.last;
     html.File file = (e.target as dynamic).files[0];
     if (file != null) return _uploadFile(file, imagesBucket, owner);
     return null;
@@ -55,7 +57,7 @@ class FbStorage implements FbStorageImpl {
     final _images = html.FileUploadInputElement();
     _images.accept = "video/*";
     _images.click();
-    final e = await _images.onChange.first;
+    final e = await _images.onChange.last;
     html.File file = (e.target as dynamic).files[0];
     if (file != null) return _uploadFile(file, imagesBucket, owner);
     return null;
@@ -65,7 +67,15 @@ class FbStorage implements FbStorageImpl {
   Future<String> pickAndUploadFile() async {
     final _files = html.FileUploadInputElement();
     _files.accept = "*";
-    final e = await _files.onChange.first;
+    _files.click();
+    // final _controller = StreamController<html.File>();
+    // _files.onChange.listen((e) {
+    //   html.File file = (e.target as dynamic).files[0];
+    //   _controller.add(file);
+    // });
+    // html.File file = await _controller.stream.first;
+    // _controller.close();
+    final e = await _files.onChange.last;
     html.File file = (e.target as dynamic).files[0];
     if (file != null) return _uploadFile(file, imagesBucket, owner);
     return null;
@@ -76,7 +86,7 @@ class FbStorage implements FbStorageImpl {
     final _images = html.FileUploadInputElement();
     _images.accept = "image/*";
     _images.click();
-    final e = await _images.onChange.first;
+    final e = await _images.onChange.last;
     html.File file = (e.target as dynamic).files[0];
     if (file != null) return _uploadFile(file, imagesBucket, owner);
     return null;
@@ -87,7 +97,7 @@ class FbStorage implements FbStorageImpl {
     final _images = html.FileUploadInputElement();
     _images.accept = "video/*";
     _images.click();
-    final e = await _images.onChange.first;
+    final e = await _images.onChange.last;
     html.File file = (e.target as dynamic).files[0];
     if (file != null) return _uploadFile(file, imagesBucket, owner);
     return null;
