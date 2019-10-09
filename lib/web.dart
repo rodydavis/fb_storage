@@ -4,15 +4,42 @@ import 'package:firebase/firebase.dart';
 import 'package:firebase/firebase.dart' as fb;
 import 'package:universal_html/prefer_universal/html.dart' as html;
 
+import 'data/classes/event.dart';
 import 'impl.dart';
 
 class FbStorage implements FbStorageImpl {
+  html.FileUploadInputElement _images, _videos, _files;
   FbStorage({
     this.owner = 'Guest',
-    this.filesBucket = 'files',
-    this.imagesBucket = 'images',
-    this.videosBucket = 'videos',
-  });
+    this.filesPath = 'files',
+    this.imagesPath = 'images',
+    this.videosPath = 'videos',
+  }) {
+    _images = html.FileUploadInputElement();
+    _images.accept = "image/*";
+    _images.onChange.listen((e) {
+      html.File file = (e.target as dynamic).files[0];
+      if (file != null) {
+        _uploadFile(file, imagesPath, owner, UploadType.image);
+      }
+    });
+    _videos = html.FileUploadInputElement();
+    _videos.accept = "video/*";
+    _videos.onChange.listen((e) {
+      html.File file = (e.target as dynamic).files[0];
+      if (file != null) {
+        _uploadFile(file, videosPath, owner, UploadType.video);
+      }
+    });
+    _files = html.FileUploadInputElement();
+    _files.accept = "*";
+    _files.onChange.listen((e) {
+      html.File file = (e.target as dynamic).files[0];
+      if (file != null) {
+        _uploadFile(file, filesPath, owner, UploadType.file);
+      }
+    });
+  }
 
   @override
   Future<String> uploadString(
@@ -42,88 +69,71 @@ class FbStorage implements FbStorageImpl {
   }
 
   @override
-  Future<String> captureUploadPhoto() async {
-    final _images = html.FileUploadInputElement();
-    _images.accept = "image/*";
+  void captureUploadPhoto() async {
     _images.click();
-    final e = await _images.onChange.last;
-    html.File file = (e.target as dynamic).files[0];
-    if (file != null) return _uploadFile(file, imagesBucket, owner);
     return null;
   }
 
   @override
-  Future<String> captureUploadVideo() async {
-    final _images = html.FileUploadInputElement();
-    _images.accept = "video/*";
-    _images.click();
-    final e = await _images.onChange.last;
-    html.File file = (e.target as dynamic).files[0];
-    if (file != null) return _uploadFile(file, imagesBucket, owner);
+  void captureUploadVideo() async {
+    _videos.click();
     return null;
   }
 
   @override
-  Future<String> pickAndUploadFile() async {
-    final _files = html.FileUploadInputElement();
-    _files.accept = "*";
+  void pickAndUploadFile() async {
     _files.click();
-    // final _controller = StreamController<html.File>();
-    // _files.onChange.listen((e) {
-    //   html.File file = (e.target as dynamic).files[0];
-    //   _controller.add(file);
-    // });
-    // html.File file = await _controller.stream.first;
-    // _controller.close();
-    final e = await _files.onChange.last;
-    html.File file = (e.target as dynamic).files[0];
-    if (file != null) return _uploadFile(file, imagesBucket, owner);
     return null;
   }
 
   @override
-  Future<String> pickUploadPhoto() async {
-    final _images = html.FileUploadInputElement();
-    _images.accept = "image/*";
+  void pickUploadPhoto() async {
     _images.click();
-    final e = await _images.onChange.last;
-    html.File file = (e.target as dynamic).files[0];
-    if (file != null) return _uploadFile(file, imagesBucket, owner);
     return null;
   }
 
   @override
-  Future<String> pickUploadVideo() async {
-    final _images = html.FileUploadInputElement();
-    _images.accept = "video/*";
-    _images.click();
-    final e = await _images.onChange.last;
-    html.File file = (e.target as dynamic).files[0];
-    if (file != null) return _uploadFile(file, imagesBucket, owner);
+  void pickUploadVideo() async {
+    _videos.click();
     return null;
   }
 
-  Future<String> _uploadFile(
-      html.File file, String bucketPath, String owner) async {
-    final fb.StorageReference ref = fb.storage().ref(bucketPath);
-    var customMetadata = {"owner": owner};
-    var uploadTask = ref.child(file.name).put(
-          file,
-          fb.UploadMetadata(
-            contentType: file.type,
-            customMetadata: customMetadata,
-          ),
-        );
-
+  void _uploadFile(
+      html.File file, String path, String owner, UploadType type) async {
+    print('Uploading File...');
+    _controller.add(FileUploadEvent(
+      url: '',
+      owner: owner,
+      path: path,
+      type: type,
+      loading: true,
+    ));
+    UploadTask uploadTask;
     try {
-      var snapshot = await uploadTask.future;
-      final _url = await snapshot.ref.getDownloadURL();
-
-      if (_url != null) {
-        return _url.toString();
-      }
+      var ref = fb
+          .storage()
+          .ref('$path/' + DateTime.now().millisecondsSinceEpoch.toString());
+      uploadTask = ref.put(file);
     } catch (e) {
-      print(e);
+      throw 'Error Creating File';
+    }
+    UploadTaskSnapshot snapshot;
+    try {
+      snapshot = await uploadTask.future;
+    } catch (e) {
+      throw 'Error Uploading File';
+    }
+    try {
+      final _url = await snapshot.ref.getDownloadURL();
+      _controller.add(FileUploadEvent(
+        url: _url ?? '',
+        owner: owner,
+        path: path,
+        type: type,
+        loading: false,
+      ));
+    } catch (e) {
+      throw 'Error Getting Url';
     }
     return null;
   }
@@ -132,11 +142,21 @@ class FbStorage implements FbStorageImpl {
   final String owner;
 
   @override
-  final String filesBucket;
+  final String filesPath;
 
   @override
-  final String imagesBucket;
+  final String imagesPath;
 
   @override
-  final String videosBucket;
+  final String videosPath;
+
+  @override
+  Stream<FileUploadEvent> get fileUploadedStream => _controller.stream;
+
+  final _controller = StreamController<FileUploadEvent>();
+
+  @override
+  void dispose() {
+    _controller.close();
+  }
 }

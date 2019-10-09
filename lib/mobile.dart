@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
@@ -5,57 +6,58 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 
+import 'data/classes/event.dart';
 import 'impl.dart';
 
 class FbStorage implements FbStorageImpl {
   FbStorage({
     this.owner = 'Guest',
-    this.filesBucket = 'files',
-    this.imagesBucket = 'images',
-    this.videosBucket = 'videos',
+    this.filesPath = 'files',
+    this.imagesPath = 'images',
+    this.videosPath = 'videos',
   });
 
   @override
-  Future<String> captureUploadPhoto() async {
+  void captureUploadPhoto() async {
     final _file = await ImagePicker.pickImage(source: ImageSource.camera);
     if (_file != null) {
-      return _uploadFile(_file, imagesBucket, owner);
+      await _uploadFile(_file, imagesPath, owner, UploadType.image);
     }
     return null;
   }
 
   @override
-  Future<String> captureUploadVideo() async {
+  void captureUploadVideo() async {
     final _file = await ImagePicker.pickVideo(source: ImageSource.camera);
     if (_file != null) {
-      return _uploadFile(_file, videosBucket, owner);
+      await _uploadFile(_file, videosPath, owner, UploadType.video);
     }
     return null;
   }
 
   @override
-  Future<String> pickAndUploadFile() async {
+  void pickAndUploadFile() async {
     final _file = await FilePicker.getFile();
     if (_file != null) {
-      return _uploadFile(_file, filesBucket, owner);
+      await _uploadFile(_file, filesPath, owner, UploadType.file);
     }
     return null;
   }
 
   @override
-  Future<String> pickUploadPhoto() async {
+  void pickUploadPhoto() async {
     final _file = await ImagePicker.pickImage(source: ImageSource.gallery);
     if (_file != null) {
-      return _uploadFile(_file, imagesBucket, owner);
+      await _uploadFile(_file, imagesPath, owner, UploadType.image);
     }
     return null;
   }
 
   @override
-  Future<String> pickUploadVideo() async {
+  void pickUploadVideo() async {
     final _file = await ImagePicker.pickVideo(source: ImageSource.gallery);
     if (_file != null) {
-      return _uploadFile(_file, videosBucket, owner);
+      await _uploadFile(_file, videosPath, owner, UploadType.video);
     }
     return null;
   }
@@ -90,15 +92,21 @@ class FbStorage implements FbStorageImpl {
     return null;
   }
 
-  Future<String> _uploadFile(
-    File _file,
-    String bucketPath,
-    String owner,
-  ) async {
+  Future _uploadFile(
+      File _file, String path, String owner, UploadType type) async {
+    _controller.add(FileUploadEvent(
+      url: '',
+      owner: owner,
+      path: path,
+      type: type,
+      loading: true,
+    ));
     final _storage = FirebaseStorage.instance;
     final StorageReference ref = _storage.ref();
     var customMetadata = {"owner": owner};
-    var uploadTask = ref.child(bucketPath).putFile(
+    var uploadTask = ref
+        .child('$path/' + DateTime.now().millisecondsSinceEpoch.toString())
+        .putFile(
           _file,
           StorageMetadata(
             customMetadata: customMetadata,
@@ -107,9 +115,13 @@ class FbStorage implements FbStorageImpl {
     try {
       var snapshot = await uploadTask.onComplete;
       final _url = await snapshot.ref.getDownloadURL();
-      if (_url != null) {
-        return _url;
-      }
+      _controller.add(FileUploadEvent(
+        url: _url ?? '',
+        owner: owner,
+        path: path,
+        type: type,
+        loading: false,
+      ));
     } catch (e) {
       print(e);
     }
@@ -120,11 +132,21 @@ class FbStorage implements FbStorageImpl {
   final String owner;
 
   @override
-  final String filesBucket;
+  final String filesPath;
 
   @override
-  final String imagesBucket;
+  final String imagesPath;
 
   @override
-  final String videosBucket;
+  final String videosPath;
+
+  @override
+  Stream<FileUploadEvent> get fileUploadedStream => _controller.stream;
+
+  final _controller = StreamController<FileUploadEvent>();
+
+  @override
+  void dispose() {
+    _controller.close();
+  }
 }

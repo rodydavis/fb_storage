@@ -1,62 +1,48 @@
+import 'data/classes/event.dart';
 import 'impl.dart';
 
 class FbStorage implements FbStorageImpl {
   FbStorage({
     this.owner = 'Guest',
-    this.filesBucket = 'files',
-    this.imagesBucket = 'images',
-    this.videosBucket = 'videos',
+    this.filesPath = 'files',
+    this.imagesPath = 'images',
+    this.videosPath = 'videos',
   });
 
   @override
   final String owner;
 
   @override
-  final String filesBucket;
+  final String filesPath;
 
   @override
-  final String imagesBucket;
+  final String imagesPath;
 
   @override
-  final String videosBucket;
+  final String videosPath;
 
   @override
-  Future<String> captureUploadPhoto({
-    String bucketPath = 'images',
-    String owner = 'Guest',
-  }) {
+  void captureUploadPhoto() {
     throw 'Platform Not Supported';
   }
 
   @override
-  Future<String> captureUploadVideo({
-    String bucketPath = 'images',
-    String owner = 'Guest',
-  }) {
+  void captureUploadVideo() {
     throw 'Platform Not Supported';
   }
 
   @override
-  Future<String> pickAndUploadFile({
-    String bucketPath = 'images',
-    String owner = 'Guest',
-  }) {
+  void pickAndUploadFile() {
     throw 'Platform Not Supported';
   }
 
   @override
-  Future<String> pickUploadPhoto({
-    String bucketPath = 'images',
-    String owner = 'Guest',
-  }) {
+  void pickUploadPhoto() {
     throw 'Platform Not Supported';
   }
 
   @override
-  Future<String> pickUploadVideo({
-    String bucketPath = 'images',
-    String owner = 'Guest',
-  }) {
+  void pickUploadVideo() {
     throw 'Platform Not Supported';
   }
 
@@ -65,9 +51,14 @@ class FbStorage implements FbStorageImpl {
     String data,
     String fileName, {
     String folder = 'files',
-    String owner = 'Guest',
     String contentType = 'text/plain',
   }) {
     throw 'Platform Not Supported';
   }
+
+  @override
+  Stream<FileUploadEvent> get fileUploadedStream => null;
+
+  @override
+  void dispose() {}
 }

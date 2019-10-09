@@ -9,13 +9,17 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
+  FbStorage _storage = FbStorage();
   @override
   void initState() {
     super.initState();
   }
 
-  String _url;
-  bool _loading = false;
+  @override
+  void dispose() {
+    _storage.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,10 +28,28 @@ class _MyAppState extends State<MyApp> {
         appBar: AppBar(
           title: const Text('Unify Connect Admin'),
         ),
-        body: Center(
-          child:
-              _loading ? CircularProgressIndicator() : Text(_url ?? 'No Url'),
-        ),
+        body: StreamBuilder<FileUploadEvent>(
+            stream: _storage.fileUploadedStream,
+            builder: (context, snapshot) {
+              if (snapshot.hasData) {
+                if (snapshot.data.loading) {
+                  return Center(
+                    child: CircularProgressIndicator(),
+                  );
+                }
+                if (snapshot.data.url.isEmpty) {
+                  return Center(
+                    child: Text('No Url'),
+                  );
+                }
+                return Center(
+                  child: Text(snapshot.data.url),
+                );
+              }
+              return Center(
+                child: Text('Upload a File'),
+              );
+            }),
         floatingActionButton: FloatingActionButton(
           child: Icon(Icons.file_upload),
           onPressed: () {
@@ -39,58 +61,18 @@ class _MyAppState extends State<MyApp> {
   }
 
   void _uploadImage() {
-    if (mounted)
-      setState(() {
-        _loading = true;
-      });
-    FbStorage().pickUploadPhoto().then((data) {
-      if (mounted)
-        setState(() {
-          _url = data;
-          _loading = false;
-        });
-    });
+    _storage.pickUploadPhoto();
   }
 
   void _uploadVideo() {
-    if (mounted)
-      setState(() {
-        _loading = true;
-      });
-    FbStorage().pickUploadVideo().then((data) {
-      if (mounted)
-        setState(() {
-          _url = data;
-          _loading = false;
-        });
-    });
+    _storage.pickUploadVideo();
   }
 
   void _uploadFile() {
-    if (mounted)
-      setState(() {
-        _loading = true;
-      });
-    FbStorage().pickAndUploadFile().then((data) {
-      if (mounted)
-        setState(() {
-          _url = data;
-          _loading = false;
-        });
-    });
+    _storage.pickAndUploadFile();
   }
 
   void _uploadString() {
-    if (mounted)
-      setState(() {
-        _loading = true;
-      });
-    FbStorage().uploadString('{}', 'test.json').then((data) {
-      if (mounted)
-        setState(() {
-          _url = data;
-          _loading = false;
-        });
-    });
+    _storage.uploadString('{}', 'test.json').then((data) {});
   }
 }

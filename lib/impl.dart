@@ -1,12 +1,14 @@
+import 'data/classes/event.dart';
+
 abstract class FbStorageImpl {
-  final String imagesBucket, filesBucket, videosBucket;
+  final String imagesPath, filesPath, videosPath;
   final String owner;
 
   FbStorageImpl({
     this.owner,
-    this.imagesBucket,
-    this.filesBucket,
-    this.videosBucket,
+    this.imagesPath,
+    this.filesPath,
+    this.videosPath,
   });
 
   Future<String> uploadString(
@@ -16,13 +18,17 @@ abstract class FbStorageImpl {
     String contentType = 'text/plain',
   });
 
-  Future<String> captureUploadPhoto();
+  void captureUploadPhoto();
 
-  Future<String> captureUploadVideo();
+  void captureUploadVideo();
 
-  Future<String> pickUploadPhoto();
+  void pickUploadPhoto();
 
-  Future<String> pickUploadVideo();
+  void pickUploadVideo();
 
-  Future<String> pickAndUploadFile();
+  void pickAndUploadFile();
+
+  Stream<FileUploadEvent> get fileUploadedStream;
+
+  void dispose();
 }
