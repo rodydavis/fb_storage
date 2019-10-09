@@ -1,13 +1,3 @@
-import 'dart:async';
-
-import 'package:flutter/services.dart';
-
-class FbStorage {
-  static const MethodChannel _channel =
-      const MethodChannel('fb_storage');
-
-  static Future<String> get platformVersion async {
-    final String version = await _channel.invokeMethod('getPlatformVersion');
-    return version;
-  }
-}
+export 'unsupported.dart'
+    if (dart.library.html) 'web.dart'
+    if (dart.library.io) 'mobile.dart';
