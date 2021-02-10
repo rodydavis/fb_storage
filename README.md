@@ -1,6 +1,6 @@
 # fb_storage
 
-A new flutter plugin project.
+This package is now deprecated and was originally created to add firebase on the desktop and web. You can now use the [FlutterFire](https://github.com/FirebaseExtended/flutterfire) packages to do anything this plugin could.
 
 ## Getting Started
 
