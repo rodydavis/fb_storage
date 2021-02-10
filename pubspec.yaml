@@ -1,10 +1,11 @@
 name: fb_storage
 description: Firebase Storage on Web and Mobile
-version: 0.0.1
+version: 1.0.0
 authors:
  - Rody Davis <rody.davis.jr@gmail.com>
-homepage: https://github.com/AppleEducate/breakpoint
-maintainer: Rody Davis (@AppleEducate)
+repository: https://github.com/rodydavis/fb_storage
+homepage: https://github.com/rodydavis/plugins
+maintainer: Rody Davis (@rodydavis)
 
 environment:
   sdk: ">=2.1.0 <3.0.0"
